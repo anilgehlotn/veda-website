@@ -1,0 +1,39 @@
+# Playwright CLI output (may contain credentials)
+.playwright-cli/
+
+# Dependencies and build output
+node_modules/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Env files
+.env*
+
+# OS
+.DS_Store
+
+
+
+node_modules
+.next
+.env*
+.DS_Store
+
+.cursor/
+
+.agents
+
+.claude
+
+.next
+
+.playwright
+.playwright-cli
+
+AGENTS.md 
+CLAUDE.md 
+
+
+DESIGN.md

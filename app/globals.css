@@ -1,0 +1,247 @@
+@import "tailwindcss";
+
+/*
+  Veda design tokens.
+  Palette: light tan paper, dark and mid brown, one accent (marigold).
+  The brown "block" is dark in both themes; the paper flips in dark mode.
+  Shape rule: buttons and frames use a 6px radius. The block has none.
+  Cards are 6px too. Z-index scale: header 20, grain 30, page-transition overlay 40.
+*/
+:root {
+  --paper: #f2e8d9;
+  --ink: #2b1b12;
+  --muted: #6b5344;
+  --line: #d9c7ad;
+  --block: #2b1b12;
+  --block-2: #4a2f1f;
+  --on-block: #f2e8d9;
+  --accent: #e39b2e;
+  --accent-hover: #f0b458;
+  --btn: #2b1b12;
+  --btn-hover: #4a2f1f;
+  --on-btn: #f2e8d9;
+  --tan: #e6d5bb;
+  --sand: #d5b88e;
+  --mid: #6e4a33;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #1b120d;
+    --ink: #f0e4d2;
+    --muted: #bea892;
+    --line: #3b2b20;
+    --block: #2a1a11;
+    --block-2: #533624;
+    --on-block: #f2e8d9;
+    --accent: #e8a23a;
+    --accent-hover: #f3bd67;
+    --btn: #e8a23a;
+    --btn-hover: #f0b458;
+    --on-btn: #1b120d;
+    --tan: #2b1e15;
+    --sand: #3b291c;
+    --mid: #5c3c28;
+  }
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-block: var(--block);
+  --color-block-2: var(--block-2);
+  --color-on-block: var(--on-block);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-btn: var(--btn);
+  --color-btn-hover: var(--btn-hover);
+  --color-on-btn: var(--on-btn);
+  --color-tan: var(--tan);
+  --color-sand: var(--sand);
+  --color-mid: var(--mid);
+  --color-tone-bg: var(--tone-bg);
+  --color-tone-fg: var(--tone-fg);
+  --color-tone-muted: var(--tone-muted);
+  --color-tone-line: var(--tone-line);
+  /* shadcn/ui colour names (components/ui), mapped onto the Veda palette. Aliases only. */
+  --color-background: var(--paper);
+  --color-foreground: var(--ink);
+  --color-primary: var(--btn);
+  --color-primary-foreground: var(--on-btn);
+  --color-secondary: var(--tan);
+  --color-secondary-foreground: var(--ink);
+  --color-muted-foreground: var(--muted);
+  --color-destructive: #9f2f2d;
+  --color-border: var(--line);
+  --color-input: var(--line);
+  --color-ring: var(--accent);
+  --font-sans: var(--font-body);
+  --font-serif: var(--font-heading);
+  --font-deva: var(--font-devanagari);
+  --font-deva-num: var(--font-deva-numerals);
+  --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html {
+  color-scheme: light dark;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/*
+  Program tones. One per card and the matching course-page hero, so the card-to-page
+  transition lands on the same colour. Muted text in every tone passes 4.5:1.
+*/
+.tone-paper { --tone-bg: var(--paper); --tone-fg: var(--ink); --tone-muted: var(--muted); --tone-line: var(--line); }
+.tone-tan { --tone-bg: var(--tan); --tone-fg: var(--ink); --tone-muted: #5a4234; --tone-line: #cbb596; }
+.tone-sand { --tone-bg: var(--sand); --tone-fg: var(--ink); --tone-muted: #4a3427; --tone-line: #b99a6f; }
+.tone-dark { --tone-bg: var(--block); --tone-fg: #f2e8d9; --tone-muted: rgb(242 232 217 / 0.72); --tone-line: rgb(242 232 217 / 0.16); }
+.tone-mid { --tone-bg: var(--mid); --tone-fg: #f6ecdd; --tone-muted: rgb(246 236 221 / 0.8); --tone-line: rgb(246 236 221 / 0.22); }
+.tone-accent { --tone-bg: var(--accent); --tone-fg: #2b1b12; --tone-muted: #4a2f1f; --tone-line: rgb(43 27 18 / 0.22); }
+
+@media (prefers-color-scheme: dark) {
+  .tone-tan, .tone-sand { --tone-muted: var(--muted); --tone-line: rgb(240 228 210 / 0.14); }
+  .tone-paper { --tone-line: rgb(240 228 210 / 0.14); }
+}
+
+/*
+  Home program row (desktop, lg+). Five cards share the row with flex-grow; the
+  hovered or keyboard-focused card grows to --grow and the rest give up the space,
+  so the row always fits. Each <li> carries half the gap on both sides, so the
+  pointer never falls into a gap between cards (no flicker between hovers).
+
+  No text rewraps while widths animate: the text block is fixed at the width of a
+  shrunk card (--cw) and the big mark is sized from --cw, which depends only on the
+  row's width (cqw), never on the card's own width. Only single-line rows stretch.
+*/
+@media (min-width: 1024px) {
+  .program-row {
+    --gap: 0.75rem;
+    --pad: 1.25rem;
+    --grow: 1.35;
+    --cw: calc(100cqw / (4 + var(--grow)) - var(--gap) - 2 * var(--pad));
+    container-type: inline-size;
+    display: flex;
+    margin-inline: calc(var(--gap) / -2);
+    overflow: visible;
+  }
+  .program-row > li {
+    flex: 1 1 0%;
+    min-width: 0;
+    padding-inline: calc(var(--gap) / 2);
+  }
+  .program-row .card-fluid {
+    padding: var(--pad);
+  }
+  .program-row .card-body {
+    width: var(--cw);
+  }
+  .program-row .card-mark {
+    font-size: min(10rem, calc(var(--cw) / 1.16));
+  }
+  .program-row .card-tagline {
+    font-size: max(1.05rem, min(1.35rem, calc(var(--cw) / 8.2)));
+  }
+  /* Label wraps at a fixed width (never with the card), leaving room for the numeral. */
+  .program-row .card-kicker {
+    white-space: normal;
+    max-width: calc(var(--cw) - 2.75rem);
+  }
+}
+@media (min-width: 1280px) {
+  .program-row {
+    --gap: 1rem;
+    --pad: 1.5rem;
+    --grow: 1.45;
+  }
+}
+/* Growth is skipped entirely for reduced motion; the cards still open on click. */
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  .program-row > li {
+    transition: flex-grow 650ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .program-row > li:has(:focus-visible) {
+    flex-grow: var(--grow);
+  }
+}
+@media (min-width: 1024px) and (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .program-row > li:hover {
+    flex-grow: var(--grow);
+  }
+}
+
+/* Paper grain: fixed, non-interactive layer so it never repaints on scroll. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  opacity: 0.07;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@media (prefers-color-scheme: dark) {
+  body::after {
+    mix-blend-mode: screen;
+    opacity: 0.05;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* Hero entrance. CSS-only, so server and client render identically. */
+@media (prefers-reduced-motion: no-preference) {
+  .rise {
+    animation: rise 0.9s var(--ease-out-soft) both;
+    animation-delay: var(--d, 0ms);
+  }
+  .line-mask > span {
+    display: block;
+    animation: line-up 1s var(--ease-out-soft) both;
+    animation-delay: var(--d, 0ms);
+  }
+  .ink-wipe {
+    animation: ink-wipe 1.6s cubic-bezier(0.65, 0, 0.35, 1) 0.2s both;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@keyframes line-up {
+  from {
+    transform: translateY(105%);
+  }
+}
+
+/* Reveals the वेद glyph left to right, like a pen stroke. */
+@keyframes ink-wipe {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
