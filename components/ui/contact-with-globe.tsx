@@ -579,6 +579,12 @@ interface ContactWithGlobeProps {
   title?: string;
   description?: string;
   className?: string;
+  /**
+   * True when Contact opens the page's dark chapter (rounded top edge over the light
+   * section above). False when a dark section above (Results, FAQ) already opened it:
+   * Contact then continues flat, with no seam.
+   */
+  opensDarkChapter?: boolean;
 }
 
 const rise = (delay: number) => ({
@@ -592,6 +598,7 @@ export default function ContactWithGlobe({
   title = "Come and see a class",
   description = "The first demo class is free. Visit the centre, call us, or message us on WhatsApp.",
   className,
+  opensDarkChapter = true,
 }: ContactWithGlobeProps) {
   return (
     <LazyMotion features={domAnimation} strict>
@@ -601,7 +608,8 @@ export default function ContactWithGlobe({
           id="contact"
           aria-labelledby="contact-title"
           className={cn(
-            "relative z-20 -mt-8 overflow-hidden rounded-t-[2rem] bg-block pb-16 pt-20 text-on-block [color-scheme:dark] sm:rounded-t-[2.75rem] md:pb-20 md:pt-24 lg:rounded-t-[3.5rem] lg:pt-28",
+            "relative overflow-hidden bg-block pb-16 pt-20 text-on-block [color-scheme:dark] md:pb-20 md:pt-24 lg:pt-28",
+            opensDarkChapter && "z-20 -mt-8 rounded-t-[2rem] sm:rounded-t-[2.75rem] lg:rounded-t-[3.5rem]",
             className,
           )}
         >
