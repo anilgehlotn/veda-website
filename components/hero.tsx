@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { DEMO_CTA } from "@/lib/site";
 
@@ -10,35 +11,51 @@ export function Hero() {
       className="grid lg:min-h-[100svh] lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]"
     >
       {/* The hero scrolls normally. Its content drifts and fades as the Programs section scrolls over it ([data-exit]). */}
-      {/* Brown block: the वेद mark over the classroom photo slot. */}
-      <div className="relative order-2 flex min-h-[420px] flex-col justify-end overflow-hidden bg-block px-4 pb-8 pt-16 text-on-block sm:min-h-[520px] sm:px-8 sm:pb-10 lg:order-1 lg:min-h-0 lg:px-12 lg:pb-14 xl:px-16">
+      {/* Brown block: the classroom photo, with वेद and its meaning set over it. Above the text on phones. */}
+      <div className="relative h-[clamp(22rem,56svh,30rem)] overflow-hidden bg-block text-on-block sm:h-[34rem] lg:h-auto">
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-[radial-gradient(120%_80%_at_85%_10%,var(--block-2)_0%,transparent_60%)]"
+          className="absolute inset-0 bg-[radial-gradient(60%_50%_at_85%_10%,var(--block-2)_0%,transparent_70%)]"
         />
 
-        {/* Photo slot. Swap for a real photo (object-cover, mix-blend-luminosity, ~35% opacity). */}
-        <div className="absolute inset-4 flex items-start justify-end rounded-[6px] border border-dashed border-on-block/25 p-4 sm:inset-6 lg:inset-x-8 lg:bottom-8 lg:top-24 xl:inset-x-10">
-          <p className="max-w-[16rem] text-right text-sm leading-snug text-on-block/60">
-            [Photo: students in a Veda classroom]
-          </p>
-        </div>
+        {/* Fixed frame: its size comes from the layout, never from the image, so nothing shifts while it loads.
+            container-type lets वेद scale with the frame on every screen. */}
+        <div
+          data-exit
+          className="absolute inset-4 overflow-hidden rounded-[18px] border border-dashed border-on-block/15 bg-block [container-type:size] sm:inset-6 lg:inset-8 lg:top-24"
+        >
+          <Image
+            src="/hero/classroom.jpg"
+            alt="Students writing their weekly test in a Veda classroom"
+            fill
+            preload
+            fetchPriority="high"
+            sizes="(min-width: 1024px) 38vw, 100vw"
+            className="object-cover object-[50%_40%] lg:object-center"
+          />
+          {/* Warm, dark sepia wash so the photo sits quietly in the brown block; darker towards the
+              bottom (where the caption sits, for AA contrast) and the left. */}
+          <div aria-hidden="true" className="absolute inset-0 bg-block/[0.62]" />
+          <div aria-hidden="true" className="absolute inset-0 bg-linear-to-t from-block/80 from-0% to-block/0 to-45%" />
+          <div aria-hidden="true" className="absolute inset-0 bg-linear-to-r from-block/35 to-block/0 to-60%" />
 
-        <div data-exit className="relative origin-bottom-left">
+          {/* Anchored bottom-left. On big frames it overhangs the bottom edge (the lowest stroke, the
+              tail of द, sits about 0.26em above the line box's bottom); on smaller frames, where the
+              caption is wide next to the glyph, it lifts so that stroke clears the caption by 8px. */}
           <p
             lang="sa"
-            className="ink-wipe -ml-1 font-deva text-[clamp(8.5rem,46vw,11rem)] leading-[1.15] text-accent sm:text-[15rem] md:text-[17rem] lg:text-[clamp(11rem,23vw,24rem)]"
+            className="ink-wipe absolute bottom-[calc(2.5rem-0.26em)] -left-[0.06em] [@container(min-width:29rem)_and_(min-height:43rem)]:-bottom-[0.22em] font-deva-hero text-[min(71cqw,48cqh)] font-bold leading-none text-accent"
           >
             वेद
           </p>
-          <p className="rise mt-2 text-base text-on-block/85 [--d:900ms] sm:text-lg">
-            Veda is Sanskrit for <span className="font-serif text-xl italic sm:text-2xl">knowledge</span>.
+          <p className="rise absolute bottom-3 left-4 text-sm text-on-block/85 [--d:900ms]">
+            Veda is Sanskrit for <em className="font-serif italic text-on-block">knowledge.</em>
           </p>
         </div>
       </div>
 
       {/* Paper side: what Veda is and the one call to action. */}
-      <div className="order-1 flex flex-col justify-center px-4 pb-14 pt-8 sm:px-8 sm:pb-20 sm:pt-12 lg:order-2 lg:px-12 lg:pb-16 lg:pt-28 xl:px-16 2xl:px-24">
+      <div className="flex flex-col justify-center px-4 pb-14 pt-8 sm:px-8 sm:pb-20 sm:pt-12 lg:px-12 lg:pb-16 lg:pt-28 xl:px-16 2xl:px-24">
         <div data-exit className="origin-top-left">
           <p className="rise text-[0.95rem] font-medium text-muted [--d:100ms]">
             <span className="block sm:inline">Coaching for Grades 8 to 12</span>

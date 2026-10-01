@@ -146,6 +146,7 @@
   --font-serif: var(--font-heading);
   --font-deva: var(--font-devanagari);
   --font-deva-num: var(--font-deva-numerals);
+  --font-deva-hero: var(--font-noto-deva);
   --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -315,12 +316,13 @@ body::after {
 }
 
 /* Reveals the वेद glyph left to right, like a pen stroke. */
+/* Negative insets so ascending matras and tails outside the line box are never trimmed. */
 @keyframes ink-wipe {
   from {
-    clip-path: inset(0 100% 0 0);
+    clip-path: inset(-50% 100% -50% -10%);
   }
   to {
-    clip-path: inset(0 0 0 0);
+    clip-path: inset(-50% -10% -50% -10%);
   }
 }
 

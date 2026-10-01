@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { EB_Garamond, Geist, Rozha_One, Tiro_Devanagari_Hindi } from "next/font/google";
+import { EB_Garamond, Geist, Noto_Serif_Devanagari, Rozha_One, Tiro_Devanagari_Hindi } from "next/font/google";
 import { PageTransitionProvider } from "@/components/page-transition";
 import { WhatsAppFloat } from "@/components/whatsapp-float";
 import "./globals.css";
@@ -23,6 +23,14 @@ const devanagari = Rozha_One({
   subsets: ["devanagari"],
   weight: "400",
   variable: "--font-devanagari",
+  display: "swap",
+});
+
+// Bold, solid Devanagari for the large वेद over the hero photo.
+const devaDisplay = Noto_Serif_Devanagari({
+  subsets: ["devanagari"],
+  weight: "700",
+  variable: "--font-noto-deva",
   display: "swap",
 });
 
@@ -51,7 +59,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-scroll-behavior="smooth" className={`${heading.variable} ${body.variable} ${devanagari.variable} ${devaNumerals.variable}`}>
+    <html lang="en" data-scroll-behavior="smooth" className={`${heading.variable} ${body.variable} ${devanagari.variable} ${devaNumerals.variable} ${devaDisplay.variable}`}>
       <body className="font-sans">
         <PageTransitionProvider>{children}</PageTransitionProvider>
         <WhatsAppFloat />
