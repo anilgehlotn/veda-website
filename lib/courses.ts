@@ -1,3 +1,4 @@
+import { SITE_CONFIG } from "./site-config";
 /*
   Course content for the program cards and the /programs/[slug] pages.
   Anything in [square brackets] is a placeholder for Veda to confirm or fill in.
@@ -85,7 +86,7 @@ const commonFaqs = (course: string): { q: string; a: string }[] => [
   },
   {
     q: `What are the fees and timings for ${course}?`,
-    a: "Fees: [Fee]. Batch timings: [Batch timings]. Call [Phone number] for the current batches.",
+    a: `Fees: [Fee]. Batch timings: [Batch timings]. Call ${SITE_CONFIG.phone} for the current batches.`,
   },
   {
     q: "Can my child attend a class before joining?",

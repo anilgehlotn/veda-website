@@ -12,21 +12,5 @@ export const NAV_LINKS = [
   { href: "/#contact", label: "Contact" },
 ];
 
-// How parents reach Veda. Placeholders in square brackets until the real details are in.
-export const CONTACT = {
-  phone: "[Phone number]",
-  phoneHref: "tel:[Phone number]",
-  whatsapp: "[WhatsApp number]",
-  // wa.me takes the number with country code and no "+", spaces or dashes.
-  whatsappHref: "https://wa.me/[WhatsApp number]",
-  email: "[Email address]",
-  emailHref: "mailto:[Email address]",
-  address: "[Centre address]",
-  mapsHref: "[Google Maps link]",
-  hours: "[Class hours]",
-  responseTime: "[response time]",
-};
-
-// Where the centre is, for the marker on the contact globe: [Latitude, Longitude].
-// Placeholder: the geographic centre of India until the centre's coordinates are in.
-export const CENTRE_COORDINATES: [number, number] = [22.35, 78.67];
+// How parents reach Veda. The details live in lib/site-config.ts (the one place to edit them).
+export { SITE_CONFIG as CONTACT } from "./site-config";

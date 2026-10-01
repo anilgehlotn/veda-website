@@ -3,15 +3,16 @@
 import * as React from "react";
 import { useId, useRef, useState } from "react";
 import { LazyMotion, MotionConfig, domAnimation, m } from "motion/react";
-import { ArrowRight, Plus, WhatsappLogo } from "@phosphor-icons/react";
+import { ArrowRight, Plus } from "@phosphor-icons/react";
+import { WhatsAppLogo } from "@/components/ui/whatsapp-logo";
 import { cn } from "@/lib/utils";
 import { CONTACT, DEMO_CTA } from "@/lib/site";
 import { FAQ_TOPICS, type Faq } from "@/data/faq";
 
 /*
-  Parents' questions, inside the dark closing chapter (Results, FAQ, Contact, footer).
-  Same espresso brown, no seam: it opens the chapter with the rounded top edge only
-  when there is no Results section above it.
+  Parents' questions, on the page's one light theme: the site paper, between the lighter
+  Results sheet and the warmer Contact sheet. Questions are cream cards with a brown
+  hairline; the selected topic is dark brown, the others outlined.
 
   Topics are tabs; the questions of the selected topic expand inline, one at a time.
   All four topic panels share one grid cell, so the area keeps the height of the
@@ -50,7 +51,12 @@ function Question({
   const answerId = `${uid}-a-${item.id}`;
   const buttonId = `${uid}-q-${item.id}`;
   return (
-    <li className="border-b border-on-block/12">
+    <li
+      className={cn(
+        "rounded-[16px] bg-card px-5 ring-1 transition-[box-shadow] duration-300 sm:px-6",
+        open ? "shadow-card ring-field-line/60" : "ring-card-line hover:ring-field-line/60",
+      )}
+    >
       <h3>
         <button
           ref={buttonRef}
@@ -60,12 +66,12 @@ function Question({
           aria-controls={answerId}
           onClick={onToggle}
           onKeyDown={onKeyDown}
-          className="group flex min-h-16 w-full touch-manipulation items-center justify-between gap-6 py-4 text-left transition-transform duration-200 ease-out-soft active:scale-[0.99] motion-reduce:transition-none"
+          className="group flex min-h-16 w-full touch-manipulation items-center justify-between gap-6 py-4 text-left transition-transform duration-200 ease-out-soft active:scale-[0.98] motion-reduce:transition-none"
         >
           <span
             className={cn(
               "text-pretty font-serif text-[1.25rem] font-medium leading-snug transition-colors duration-300 md:text-[1.35rem]",
-              open ? "text-on-block" : "text-on-block/90 group-hover:text-on-block",
+              "text-ink",
             )}
           >
             {item.question}
@@ -74,7 +80,7 @@ function Question({
             aria-hidden="true"
             className={cn(
               "flex size-9 shrink-0 items-center justify-center rounded-[6px] border transition-[border-color,color] duration-300",
-              open ? "border-accent/70 text-accent" : "border-on-block/25 text-on-block/80 group-hover:border-on-block/50",
+              open ? "border-ink bg-btn text-on-btn" : "border-field-line text-ink group-hover:border-ink",
             )}
           >
             {/* The plus turns into a cross; the box stays square. */}
@@ -104,7 +110,7 @@ function Question({
         <div className="min-h-0 overflow-hidden">
           <p
             className={cn(
-              "max-w-[40rem] pb-6 pr-12 text-pretty text-[1.05rem] leading-relaxed text-on-block/85 transition-[opacity,transform,translate] duration-500 ease-out-soft motion-reduce:transition-none",
+              "max-w-[40rem] pb-6 pr-12 text-pretty text-[1.05rem] leading-relaxed text-muted transition-[opacity,transform,translate] duration-500 ease-out-soft motion-reduce:transition-none",
               open ? "translate-y-0 opacity-100" : "-translate-y-1 opacity-0",
             )}
           >
@@ -116,7 +122,7 @@ function Question({
   );
 }
 
-export function Faq({ opensDarkChapter = false }: { opensDarkChapter?: boolean }) {
+export function Faq() {
   const uid = useId();
   const [topic, setTopic] = useState(0);
   const [open, setOpen] = useState<string | null>(null);
@@ -163,12 +169,7 @@ export function Faq({ opensDarkChapter = false }: { opensDarkChapter?: boolean }
         <section
           id="faq"
           aria-labelledby="faq-title"
-          className={cn(
-            "relative bg-block pb-16 text-on-block [color-scheme:dark] md:pb-20",
-            opensDarkChapter
-              ? "z-20 -mt-8 rounded-t-[2rem] pt-20 sm:rounded-t-[2.75rem] md:pt-24 lg:rounded-t-[3.5rem] lg:pt-28"
-              : "pt-4 md:pt-8",
-          )}
+          className="relative bg-sheet-2 py-20 text-ink md:py-24 lg:py-28"
         >
           <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-12">
             <m.div {...rise(0)} className="max-w-[40rem]">
@@ -178,7 +179,7 @@ export function Faq({ opensDarkChapter = false }: { opensDarkChapter?: boolean }
               >
                 Questions parents ask us
               </h2>
-              <p className="mt-4 max-w-[32rem] text-pretty text-[1.1rem] leading-relaxed text-on-block/80">
+              <p className="mt-4 max-w-[32rem] text-pretty text-[1.1rem] leading-relaxed text-muted">
                 Short answers to what parents ask most. If yours is not here, message us on WhatsApp.
               </p>
             </m.div>
@@ -189,7 +190,7 @@ export function Faq({ opensDarkChapter = false }: { opensDarkChapter?: boolean }
                 <div
                   role="tablist"
                   aria-label="Question topics"
-                  className="-mx-4 flex gap-1 overflow-x-auto border-b border-on-block/12 px-4 [scrollbar-width:none] sm:-mx-8 sm:px-8 lg:mx-0 lg:flex-col lg:gap-1 lg:overflow-visible lg:border-b-0 lg:px-0 [&::-webkit-scrollbar]:hidden"
+                  className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:-mx-8 sm:px-8 lg:mx-0 lg:flex-col lg:overflow-visible lg:px-0 lg:pb-0 [&::-webkit-scrollbar]:hidden"
                 >
                   {FAQ_TOPICS.map((t, i) => {
                     const on = topic === i;
@@ -208,24 +209,16 @@ export function Faq({ opensDarkChapter = false }: { opensDarkChapter?: boolean }
                         onClick={() => pickTopic(i)}
                         onKeyDown={(e) => onTopicKey(e, i)}
                         className={cn(
-                          "relative min-h-12 shrink-0 touch-manipulation whitespace-nowrap rounded-[6px] px-4 text-left transition-[color,transform,translate,scale] duration-200 ease-out-soft active:scale-[0.98] motion-reduce:transition-none lg:flex lg:min-h-14 lg:items-center lg:justify-between lg:gap-4 lg:whitespace-normal lg:py-3 lg:pl-6",
-                          on ? "text-on-block" : "text-on-block/75 hover:text-on-block",
+                          "min-h-12 shrink-0 touch-manipulation whitespace-nowrap rounded-[6px] border px-4 text-left transition-[color,background-color,border-color,transform,translate,scale] duration-200 ease-out-soft active:scale-[0.98] motion-reduce:transition-none lg:flex lg:min-h-14 lg:items-center lg:justify-between lg:gap-4 lg:whitespace-normal lg:py-3 lg:pl-5",
+                          on ? "border-btn bg-btn text-on-btn" : "border-field-line text-ink hover:border-ink hover:bg-card",
                         )}
                       >
                         <span className={cn("text-[1rem] lg:font-serif lg:text-[1.3rem]", on && "font-medium")}>
                           {t.title}
                         </span>
-                        <span className="hidden text-[0.9rem] text-on-block/75 lg:inline">
+                        <span className={cn("hidden text-[0.9rem] lg:inline", on ? "text-on-btn/80" : "text-muted")}>
                           {t.questions.length} questions
                         </span>
-                        {/* Marker: a bar under the tab on phones, beside it on desktop. */}
-                        <span
-                          aria-hidden="true"
-                          className={cn(
-                            "absolute inset-x-4 -bottom-px h-[2px] bg-accent transition-[transform,scale] duration-300 ease-out-soft motion-reduce:transition-none lg:inset-x-auto lg:bottom-3 lg:left-2 lg:top-3 lg:h-auto lg:w-[3px] lg:rounded-full",
-                            on ? "scale-100" : "scale-x-0 lg:scale-x-100 lg:scale-y-0",
-                          )}
-                        />
                       </button>
                     );
                   })}
@@ -248,7 +241,7 @@ export function Faq({ opensDarkChapter = false }: { opensDarkChapter?: boolean }
                         on ? "visible opacity-100" : "invisible opacity-0",
                       )}
                     >
-                      <ul className="border-t border-on-block/12">
+                      <ul className="grid gap-2">
                         {t.questions.map((q, qi) => (
                           <Question
                             key={q.id}
@@ -269,15 +262,15 @@ export function Faq({ opensDarkChapter = false }: { opensDarkChapter?: boolean }
               </m.div>
             </div>
 
-            {/* Still have a question? Double bezel: faint cream shell, lighter brown core. */}
+            {/* Still have a question? The page's card style (double bezel). */}
             <m.div
               {...rise(0.1)}
-              className="mt-14 rounded-[24px] bg-on-block/[0.06] p-1.5 ring-1 ring-on-block/10 md:mt-16"
+              className="mt-12 rounded-[24px] bg-card-shell p-2 shadow-card ring-1 ring-card-line md:mt-14 lg:mt-16"
             >
-              <div className="flex flex-col gap-6 rounded-[18px] bg-block-2/60 p-6 ring-1 ring-on-block/[0.07] shadow-[inset_0_1px_0_rgb(242_232_217/0.06)] md:flex-row md:items-center md:justify-between md:p-8">
+              <div className="flex flex-col gap-6 rounded-[16px] bg-card p-6 md:flex-row md:items-center md:justify-between md:p-8">
                 <div>
                   <p className="font-serif text-[1.6rem] font-medium leading-tight">Still have a question?</p>
-                  <p className="mt-1.5 text-pretty text-[1rem] leading-relaxed text-on-block/80">
+                  <p className="mt-1.5 text-pretty text-[1rem] leading-relaxed text-muted">
                     Message us on WhatsApp, or come for the free demo class and ask us in person.
                   </p>
                 </div>
@@ -286,18 +279,18 @@ export function Faq({ opensDarkChapter = false }: { opensDarkChapter?: boolean }
                     href={CONTACT.whatsappHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex h-14 touch-manipulation items-center justify-center gap-2.5 whitespace-nowrap rounded-[6px] border border-on-block/45 px-6 text-[1.02rem] font-medium text-on-block transition-[border-color,transform,translate,scale] duration-300 ease-out-soft hover:border-on-block/80 active:scale-[0.98] motion-reduce:transition-none"
+                    className="inline-flex h-14 touch-manipulation items-center justify-center gap-2.5 whitespace-nowrap rounded-[6px] border border-field-line px-6 text-[1.02rem] font-medium text-ink transition-[border-color,background-color,transform,translate,scale] duration-300 ease-out-soft hover:border-ink hover:bg-sheet-1 active:scale-[0.98] motion-reduce:transition-none"
                   >
-                    <WhatsappLogo size={22} weight="light" aria-hidden="true" className="text-accent" />
+                    <WhatsAppLogo className="size-5 text-ink" />
                     Message on WhatsApp
                     <span className="sr-only">(opens WhatsApp)</span>
                   </a>
                   <a
                     href={DEMO_CTA.href}
-                    className="group inline-flex h-14 touch-manipulation items-center justify-between gap-4 whitespace-nowrap rounded-[6px] bg-accent pl-6 pr-2 text-[1.02rem] font-medium text-block transition-[background-color,transform,translate,scale] duration-300 ease-out-soft hover:bg-accent-hover active:scale-[0.98] motion-reduce:transition-none"
+                    className="group inline-flex h-14 touch-manipulation items-center justify-between gap-4 whitespace-nowrap rounded-[6px] bg-btn pl-6 pr-2 text-[1.02rem] font-medium text-on-btn transition-[background-color,transform,translate,scale] duration-300 ease-out-soft hover:bg-btn-hover active:scale-[0.98] motion-reduce:transition-none"
                   >
                     {DEMO_CTA.label}
-                    <span className="flex size-10 items-center justify-center rounded-[4px] bg-block/10 transition-[transform,translate,scale] duration-300 ease-out-soft group-hover:translate-x-0.5 group-hover:scale-105 motion-reduce:transition-none">
+                    <span className="flex size-10 items-center justify-center rounded-[4px] bg-on-btn/10 text-accent transition-[transform,translate,scale] duration-300 ease-out-soft group-hover:translate-x-0.5 group-hover:scale-105 motion-reduce:transition-none dark:text-on-btn">
                       <ArrowRight size={20} weight="bold" aria-hidden="true" />
                     </span>
                   </a>

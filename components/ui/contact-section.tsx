@@ -2,10 +2,7 @@
 
 import * as React from "react";
 import { useEffect, useId, useRef, useState } from "react";
-import { preconnect } from "react-dom";
-import { LazyMotion, MotionConfig, animate, domAnimation, m, type AnimationPlaybackControls } from "motion/react";
-import type { ExtendedFeature, GeoPermissibleObjects } from "d3-geo";
-import type { GeometryCollection, Topology } from "topojson-specification";
+import { LazyMotion, MotionConfig, domAnimation, m } from "motion/react";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -17,199 +14,37 @@ import {
   MapPin,
   Phone,
   WarningCircle,
-  WhatsappLogo,
   type Icon,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { CENTRE_COORDINATES, CONTACT, DEMO_CTA } from "@/lib/site";
-import { GRADES, PREPARING_FOR, normaliseIndianMobile, submitEnquiry, type Enquiry } from "@/lib/enquiry";
+import { CONTACT, DEMO_CTA } from "@/lib/site";
+import { GRADES, HONEYPOT_FIELD, PREPARING_FOR, normaliseIndianMobile } from "@/lib/enquiry";
+import { sendEnquiry } from "@/app/actions/send-enquiry";
+import { WhatsAppLogo } from "@/components/ui/whatsapp-logo";
 
 /*
-  Contact: the page's closing chapter. Adapted from 21st.dev "contact-with-globe".
+  Contact: the last light section, on a sheet a shade warmer than the FAQ above it.
+  Originally adapted from 21st.dev "contact-with-globe" (the globe has since been removed).
+  The dark footer below rises over its bottom edge with a rounded top: the page's one
+  closing switch from light to dark.
 
-  Theme. The one deliberate light-to-dark switch on the page: this section and the
-  footer are a single espresso-brown chapter (bg-block, the dark Programs cards'
-  colour), cream text, marigold as the only accent. The rounded top edge rises over
-  the grid paper of the section above, so the switch reads as a new sheet, not a cut.
+  Layout: the form comes first in the page order (it is the main action, and first on
+  phones). On desktop the contact details sit on the left, their heading aligned with the
+  top of the form card; on tablets the details run in two columns under the form.
 
   Motion lives only here (motion/react). The page's GSAP (<ScrollMotion>, Why Veda)
   never wraps this component, so the two never touch the same elements.
-
-  Globe. It turns once to India when it scrolls into view and stops on the centre's
-  marker: "this is where we are". No React state per frame: a Motion value drives one
-  draw() that rewrites three SVG paths through refs. The map code and data load only
-  when the globe is near the viewport; the space is reserved from the start; the turn
-  pauses off screen; a failed fetch leaves a clean outline globe facing India.
 */
 
 const EASE = [0.16, 1, 0.3, 1] as const;
-const WORLD_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
-const INDIA_ID = "356";
-const ERROR_TEXT = "text-[#f5a48c]"; // warm coral, 8:1 on the espresso brown
-
-/* ---------- Globe ---------- */
-
-type Rotation = [number, number, number];
-type WorldTopology = Topology<{ countries: GeometryCollection }>;
-
-const SIZE = 400; // viewBox units; the SVG scales with its box, so no resize handling
-const [LAT, LON] = CENTRE_COORDINATES;
-// Centre the view 22° south of the marker, so India sits in the visible upper part.
-const END: Rotation = [-LON, -(LAT - 22), 0];
-const START: Rotation = [END[0] + 150, END[1] + 14, 0];
-
-function GlobeToIndia({ className }: { className?: string }) {
-  preconnect("https://cdn.jsdelivr.net", { crossOrigin: "anonymous" });
-  const box = useRef<HTMLDivElement>(null);
-  const graticuleRef = useRef<SVGPathElement>(null);
-  const landRef = useRef<SVGPathElement>(null);
-  const indiaRef = useRef<SVGPathElement>(null);
-  const markerRef = useRef<SVGGElement>(null);
-
-  useEffect(() => {
-    const el = box.current;
-    if (!el) return;
-    let cancelled = false;
-    let visible = false;
-    let done = false;
-    let turn: AnimationPlaybackControls | null = null;
-    let draw: ((r: Rotation) => void) | null = null;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    // Turn once, only while on screen. Pausing keeps its place; it resumes on return.
-    const run = () => {
-      if (!draw || done || !visible) return;
-      if (turn) {
-        turn.play();
-        return;
-      }
-      const d = draw;
-      turn = animate(0, 1, {
-        duration: 2.6,
-        ease: [0.65, 0, 0.35, 1],
-        onUpdate: (t) => d([START[0] + (END[0] - START[0]) * t, START[1] + (END[1] - START[1]) * t, 0]),
-        onComplete: () => {
-          done = true;
-          el.dataset.turn = "done"; // arrived and stopped
-          seen.disconnect();
-        },
-      });
-    };
-
-    const load = async () => {
-      const [geo, topo] = await Promise.all([import("d3-geo"), import("topojson-client")]);
-      const projection = geo
-        .geoOrthographic()
-        .scale(SIZE / 2 - 2)
-        .translate([SIZE / 2, SIZE / 2])
-        .clipAngle(90)
-        .precision(0.6);
-      const path = geo.geoPath(projection).digits(1);
-      const graticule = geo.geoGraticule10();
-
-      let land: GeoPermissibleObjects | null = null;
-      let india: ExtendedFeature | null = null;
-      try {
-        const res = await fetch(WORLD_URL);
-        if (!res.ok) throw new Error(`World map: ${res.status}`);
-        const world = (await res.json()) as WorldTopology;
-        land = topo.mesh(world, world.objects.countries);
-        const countries = topo.feature(world, world.objects.countries);
-        india = (countries.features.find((f) => String(f.id) === INDIA_ID) as ExtendedFeature | undefined) ?? null;
-      } catch {
-        // Fallback: outline globe with its grid and the marker, already facing India.
-        land = null;
-      }
-      if (cancelled) return;
-
-      draw = ([lambda, phi]) => {
-        projection.rotate([lambda, phi, 0]);
-        graticuleRef.current?.setAttribute("d", path(graticule) ?? "");
-        landRef.current?.setAttribute("d", land ? (path(land) ?? "") : "");
-        indiaRef.current?.setAttribute("d", india ? (path(india) ?? "") : "");
-        const marker = markerRef.current;
-        const point = projection([LON, LAT]);
-        const facing = geo.geoDistance([LON, LAT], [-lambda, -phi]) < Math.PI / 2 - 0.05;
-        if (marker && point) {
-          marker.setAttribute("transform", `translate(${point[0].toFixed(1)} ${point[1].toFixed(1)})`);
-          marker.setAttribute("opacity", facing ? "1" : "0");
-        }
-      };
-
-      el.dataset.globe = land ? "map" : "fallback";
-      if (reduce || !land) {
-        draw(END);
-        done = true;
-        el.dataset.turn = "done";
-        seen.disconnect();
-        return;
-      }
-      draw(START);
-      run();
-    };
-
-    // Load the map code and data only when the globe is getting close.
-    const near = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return;
-        near.disconnect();
-        void load();
-      },
-      { rootMargin: "600px 0px" },
-    );
-    const seen = new IntersectionObserver(
-      ([entry]) => {
-        visible = entry.isIntersecting;
-        if (visible) run();
-        else turn?.pause();
-      },
-      { threshold: 0.4 },
-    );
-    near.observe(el);
-    seen.observe(el);
-
-    return () => {
-      cancelled = true;
-      near.disconnect();
-      seen.disconnect();
-      turn?.stop();
-    };
-  }, []);
-
-  return (
-    <div
-      ref={box}
-      role="img"
-      aria-label="A globe that turns to India and stops on a marker at Veda's centre."
-      className={cn("relative aspect-[10/7] overflow-hidden", className)}
-    >
-      <svg viewBox={`0 0 ${SIZE} ${SIZE}`} aria-hidden="true" className="absolute inset-x-0 top-0 h-auto w-full">
-        <circle
-          cx={SIZE / 2}
-          cy={SIZE / 2}
-          r={SIZE / 2 - 2}
-          className="fill-on-block/[0.035] stroke-on-block/35"
-          strokeWidth={1}
-        />
-        <path ref={graticuleRef} fill="none" className="stroke-on-block/12" strokeWidth={0.6} />
-        <path ref={indiaRef} className="fill-accent/20 stroke-accent" strokeWidth={0.9} strokeLinejoin="round" />
-        <path ref={landRef} fill="none" className="stroke-on-block/45" strokeWidth={0.6} strokeLinejoin="round" />
-        <g ref={markerRef} opacity={0}>
-          <circle r={11} className="fill-accent/20" />
-          <circle r={4.5} className="fill-accent stroke-block" strokeWidth={1.5} />
-        </g>
-      </svg>
-      {/* The lower part of the globe sinks into the section. */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-linear-to-t from-block to-transparent" />
-    </div>
-  );
-}
+const ERROR_TEXT = "text-destructive"; // deep red-brown (#9f2f2d), over 7:1 on cream
 
 /* ---------- Ways to reach Veda ---------- */
 
 type Channel = {
-  icon: Icon;
+  /** A Phosphor icon, or "whatsapp" for the official WhatsApp mark. */
+  icon: Icon | "whatsapp";
   label: string;
   value: string;
   href?: string;
@@ -219,25 +54,56 @@ type Channel = {
 
 const CHANNELS: Channel[] = [
   { icon: Phone, label: "Call", value: CONTACT.phone, href: CONTACT.phoneHref },
-  { icon: WhatsappLogo, label: "WhatsApp", value: CONTACT.whatsapp, href: CONTACT.whatsappHref, external: true },
+  { icon: "whatsapp", label: "WhatsApp", value: CONTACT.whatsapp, href: CONTACT.whatsappHref, external: true },
   { icon: EnvelopeSimple, label: "Email", value: CONTACT.email, href: CONTACT.emailHref },
   { icon: MapPin, label: "Visit", value: CONTACT.address, directions: CONTACT.mapsHref },
   { icon: Clock, label: "Class hours", value: CONTACT.hours },
 ];
 
-function ChannelIcon({ icon: Glyph }: { icon: Icon }) {
+function ChannelIcon({ icon: Glyph }: { icon: Channel["icon"] }) {
   return (
-    <span className="flex size-11 shrink-0 items-center justify-center rounded-[6px] border border-on-block/20 text-accent transition-colors duration-300 group-hover:border-accent/70">
-      <Glyph size={22} weight="light" aria-hidden="true" />
+    <span className="flex size-11 shrink-0 items-center justify-center rounded-[6px] border border-card-line bg-card text-mid transition-colors duration-300 group-hover:border-ink group-hover:text-ink">
+      {Glyph === "whatsapp" ? (
+        <WhatsAppLogo className="size-[20px]" />
+      ) : (
+        <Glyph size={22} weight="light" aria-hidden="true" />
+      )}
     </span>
+  );
+}
+
+/* Phone and WhatsApp as links inside a sentence (form success and error messages). */
+function InlineContacts() {
+  const link = "font-medium underline decoration-current/40 underline-offset-4 hover:decoration-current";
+  return (
+    <>
+      call{" "}
+      <a href={CONTACT.phoneHref} className={cn(link, "whitespace-nowrap")}>
+        {CONTACT.phone}
+      </a>{" "}
+      or{" "}
+      <a href={CONTACT.whatsappHref} target="_blank" rel="noopener noreferrer" className={link}>
+        message us on WhatsApp
+      </a>
+    </>
   );
 }
 
 function ChannelRow({ channel }: { channel: Channel }) {
   const text = (
     <span className="min-w-0">
-      <span className="block text-[0.9rem] text-on-block/75">{channel.label}</span>
-      <span className="block text-[1.05rem] font-medium text-on-block [overflow-wrap:anywhere]">{channel.value}</span>
+      <span className="block text-[0.9rem] text-muted">{channel.label}</span>
+      <span className="block text-[1.05rem] font-medium text-ink decoration-ink/30 underline-offset-4 [overflow-wrap:anywhere] group-hover:underline">
+        {/* An email address may wrap after the @ on narrow screens, never mid-word. */}
+        {channel.value.includes("@") ? (
+          <>
+            {channel.value.split("@")[0]}@<wbr />
+            {channel.value.split("@").slice(1).join("@")}
+          </>
+        ) : (
+          channel.value
+        )}
+      </span>
     </span>
   );
 
@@ -254,7 +120,7 @@ function ChannelRow({ channel }: { channel: Channel }) {
           size={18}
           weight="light"
           aria-hidden="true"
-          className="ml-auto shrink-0 text-on-block/60 transition-[transform,translate,color] duration-300 ease-out-soft group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-accent motion-reduce:transition-none"
+          className="ml-auto shrink-0 text-muted transition-[transform,translate,color] duration-300 ease-out-soft group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-ink motion-reduce:transition-none"
         />
         {channel.external && <span className="sr-only">(opens WhatsApp)</span>}
       </a>
@@ -271,7 +137,7 @@ function ChannelRow({ channel }: { channel: Channel }) {
             href={channel.directions}
             target="_blank"
             rel="noopener noreferrer"
-            className="group/dir mt-1 inline-flex touch-manipulation min-h-6 items-center gap-1 text-[0.95rem] font-medium text-accent underline decoration-accent/40 underline-offset-4 transition-[color,text-decoration-color] duration-300 hover:decoration-accent"
+            className="group/dir mt-1 inline-flex touch-manipulation min-h-6 items-center gap-1 text-[0.95rem] font-medium text-accent-ink underline decoration-accent-ink/40 underline-offset-4 transition-[color,text-decoration-color] duration-300 hover:decoration-accent-ink"
           >
             Get directions
             <ArrowUpRight
@@ -310,7 +176,7 @@ function validate(v: Values): Partial<Record<Field, string>> {
 }
 
 const CONTROL =
-  "w-full rounded-[6px] border border-on-block/45 bg-block/70 px-4 text-base text-on-block transition-colors duration-200 placeholder:text-on-block/65 hover:border-on-block/65 focus-visible:border-accent focus-visible:outline-offset-1 aria-[invalid=true]:border-[#f5a48c]";
+  "w-full rounded-[6px] border border-field-line bg-field-bg px-4 text-base text-ink transition-colors duration-200 placeholder:text-muted hover:border-ink focus-visible:border-ink focus-visible:outline-offset-1 aria-[invalid=true]:border-destructive";
 
 function FieldShell({
   id,
@@ -327,7 +193,7 @@ function FieldShell({
 }) {
   return (
     <div className={cn("grid content-start gap-2", className)}>
-      <label htmlFor={id} className="text-[0.95rem] font-medium text-on-block">
+      <label htmlFor={id} className="text-[0.95rem] font-medium text-ink">
         {label}
       </label>
       {children}
@@ -352,6 +218,8 @@ function EnquiryForm() {
   const [status, setStatus] = useState<Status>("idle");
   const thanks = useRef<HTMLHeadingElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const honeypot = useRef<HTMLInputElement>(null);
+  const [failDetail, setFailDetail] = useState<string | null>(null);
   // The thank-you keeps the form's height, so the card does not collapse under the reader.
   const [formHeight, setFormHeight] = useState<number>();
 
@@ -383,20 +251,20 @@ function EnquiryForm() {
       return;
     }
     setStatus("sending");
-    const enquiry: Enquiry = {
-      parentName: values.parentName.trim(),
-      studentName: values.studentName.trim(),
-      grade: values.grade as Enquiry["grade"],
-      preparingFor: values.preparingFor as Enquiry["preparingFor"],
-      phone: normaliseIndianMobile(values.phone) ?? "",
-      message: values.message.trim(),
-      sentAt: new Date().toISOString(),
-    };
     try {
-      await submitEnquiry(enquiry);
-      setFormHeight(formRef.current?.offsetHeight);
-      setStatus("sent");
-    } catch {
+      // The server validates everything again and emails Veda (app/actions/send-enquiry.ts).
+      // "Thank you" appears only when the email was actually sent.
+      const result = await sendEnquiry({ ...values, [HONEYPOT_FIELD]: honeypot.current?.value ?? "" });
+      if (result.ok) {
+        setFormHeight(formRef.current?.offsetHeight);
+        setStatus("sent");
+      } else {
+        // `detail` is only sent by the server in development (see app/actions/send-enquiry.ts).
+        setFailDetail(result.detail ?? null);
+        setStatus("failed");
+      }
+    } catch (err) {
+      setFailDetail(process.env.NODE_ENV !== "production" ? `The request did not complete: ${String(err)}` : null);
       setStatus("failed");
     }
   };
@@ -409,13 +277,13 @@ function EnquiryForm() {
         style={{ minHeight: formHeight }}
         className="grid min-h-[26rem] content-center justify-items-start gap-4 py-6"
       >
-        <CheckCircle size={40} weight="light" aria-hidden="true" className="text-accent" />
+        <CheckCircle size={40} weight="light" aria-hidden="true" className="text-accent-ink" />
         <h3 ref={thanks} tabIndex={-1} className="text-balance font-serif text-[1.9rem] font-medium leading-tight outline-none">
           Thank you. We&rsquo;ll call you within {CONTACT.responseTime}.
         </h3>
-        <p className="max-w-[26rem] text-pretty break-words leading-relaxed text-on-block/80">
+        <p className="max-w-[26rem] text-pretty break-words leading-relaxed text-muted">
           We&rsquo;ll call {phone.replace(/^(\d{5})(\d{5})$/, "$1 $2")} to fix a day for {values.studentName.trim()}&rsquo;s free demo class. To
-          talk sooner, call {CONTACT.phone} or message us on WhatsApp.
+          talk sooner, <InlineContacts />.
         </p>
       </div>
     );
@@ -424,15 +292,35 @@ function EnquiryForm() {
   const sending = status === "sending";
 
   return (
-    <form ref={formRef} noValidate onSubmit={onSubmit} aria-describedby={`${uid}-note`} className="grid gap-5">
+    <form ref={formRef} noValidate onSubmit={onSubmit} aria-describedby={`${uid}-note`} className="relative grid gap-5">
       <div>
         <h3 className="font-serif text-[1.6rem] font-medium leading-tight">Tell us about your child</h3>
-        <p id={`${uid}-note`} className="mt-1.5 text-pretty text-[0.98rem] leading-relaxed text-on-block/80">
+        <p id={`${uid}-note`} className="mt-1.5 text-pretty text-[0.98rem] leading-relaxed text-muted">
           We&rsquo;ll call you to fix a day and time for the free demo class.
         </p>
       </div>
 
-      <div className="h-px bg-on-block/12" aria-hidden="true" />
+      <div className="h-px bg-card-line" aria-hidden="true" />
+
+      {/* Honeypot for bots. Off-screen with inline styles (never display:none, which bots skip),
+          so it stays hidden even before the stylesheet loads; out of the tab order and hidden
+          from screen readers; a name browsers do not autofill. */}
+      <div
+        aria-hidden="true"
+        style={{ position: "absolute", left: "-9999px", top: 0, width: 1, height: 1, overflow: "hidden", opacity: 0, pointerEvents: "none" }}
+      >
+        <label htmlFor={`${uid}-hp`}>Leave this field empty</label>
+        <input
+          ref={honeypot}
+          id={`${uid}-hp`}
+          type="text"
+          name={HONEYPOT_FIELD}
+          tabIndex={-1}
+          autoComplete="off"
+          aria-hidden="true"
+          defaultValue=""
+        />
+      </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
         <FieldShell id={id("parentName")} label="Parent's name" error={shown("parentName")}>
@@ -511,11 +399,11 @@ function EnquiryForm() {
           type="submit"
           disabled={sending}
           aria-busy={sending}
-          className="group h-14 w-full touch-manipulation justify-between gap-4 rounded-[6px] bg-accent py-0 pl-6 pr-2 text-[1.05rem] font-medium text-block ring-offset-block transition-[background-color,transform,translate,scale] duration-300 ease-out-soft hover:bg-accent-hover active:scale-[0.98] disabled:opacity-80 motion-reduce:transition-none sm:w-fit sm:min-w-[19rem]"
+          className="group h-14 w-full touch-manipulation justify-between gap-4 rounded-[6px] bg-btn py-0 pl-6 pr-2 text-[1.05rem] font-medium text-on-btn transition-[background-color,transform,translate,scale] duration-300 ease-out-soft hover:bg-btn-hover active:scale-[0.98] disabled:opacity-80 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent focus-visible:ring-0 motion-reduce:transition-none sm:w-fit sm:min-w-[19rem]"
         >
           {sending ? "Sending…" : DEMO_CTA.label}
           {/* Button-in-button: the arrow sits in its own inset square. */}
-          <span className="flex size-10 items-center justify-center rounded-[4px] bg-block/10 transition-[transform,translate,scale] duration-300 ease-out-soft group-hover:translate-x-0.5 group-hover:scale-105 motion-reduce:transition-none">
+          <span className="flex size-10 items-center justify-center rounded-[4px] bg-on-btn/10 text-accent transition-[transform,translate,scale] duration-300 ease-out-soft group-hover:translate-x-0.5 group-hover:scale-105 motion-reduce:transition-none dark:text-on-btn">
             {sending ? (
               <CircleNotch size={20} weight="bold" aria-hidden="true" className="animate-spin motion-reduce:animate-none" />
             ) : (
@@ -527,7 +415,15 @@ function EnquiryForm() {
           {status === "failed" && (
             <span className="flex items-start gap-1.5">
               <WarningCircle size={18} weight="bold" aria-hidden="true" className="mt-0.5 shrink-0" />
-              We couldn&rsquo;t send this. Please try again, or call {CONTACT.phone}.
+              <span>
+                We couldn&rsquo;t send your request. Please <InlineContacts />.
+                {failDetail && (
+                  <span className="mt-2 block rounded-[6px] bg-sheet-3 px-3 py-2 text-[0.85rem] leading-snug text-ink">
+                    <span className="font-medium">Development only: </span>
+                    {failDetail}
+                  </span>
+                )}
+              </span>
             </span>
           )}
         </p>
@@ -549,8 +445,8 @@ function SelectBox({
         className={cn(
           CONTROL,
           "h-12 cursor-pointer appearance-none pr-11",
-          !props.value && "text-on-block/65",
-          "[&>option]:bg-block [&>option]:text-on-block",
+          !props.value && "text-muted",
+          "[&>option]:bg-card [&>option]:text-ink",
           className,
         )}
       >
@@ -567,7 +463,7 @@ function SelectBox({
         size={18}
         weight="bold"
         aria-hidden="true"
-        className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-on-block/75"
+        className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted"
       />
     </div>
   );
@@ -575,16 +471,10 @@ function SelectBox({
 
 /* ---------- Section ---------- */
 
-interface ContactWithGlobeProps {
+interface ContactSectionProps {
   title?: string;
   description?: string;
   className?: string;
-  /**
-   * True when Contact opens the page's dark chapter (rounded top edge over the light
-   * section above). False when a dark section above (Results, FAQ) already opened it:
-   * Contact then continues flat, with no seam.
-   */
-  opensDarkChapter?: boolean;
 }
 
 const rise = (delay: number) => ({
@@ -594,12 +484,11 @@ const rise = (delay: number) => ({
   transition: { duration: 0.75, delay, ease: EASE },
 });
 
-export default function ContactWithGlobe({
+export default function ContactSection({
   title = "Come and see a class",
   description = "The first demo class is free. Visit the centre, call us, or message us on WhatsApp.",
   className,
-  opensDarkChapter = true,
-}: ContactWithGlobeProps) {
+}: ContactSectionProps) {
   return (
     <LazyMotion features={domAnimation} strict>
       {/* Reduced motion: Motion drops the movement and keeps the short fades. */}
@@ -608,8 +497,8 @@ export default function ContactWithGlobe({
           id="contact"
           aria-labelledby="contact-title"
           className={cn(
-            "relative overflow-hidden bg-block pb-16 pt-20 text-on-block [color-scheme:dark] md:pb-20 md:pt-24 lg:pt-28",
-            opensDarkChapter && "z-20 -mt-8 rounded-t-[2rem] sm:rounded-t-[2.75rem] lg:rounded-t-[3.5rem]",
+            // Bottom padding includes the 2rem the footer's rounded edge rises over.
+            "relative overflow-hidden bg-sheet-3 pb-24 pt-20 text-ink md:pb-28 md:pt-24 lg:pb-32 lg:pt-28",
             className,
           )}
         >
@@ -621,7 +510,7 @@ export default function ContactWithGlobe({
               >
                 {title}
               </h2>
-              <p className="mt-4 max-w-[32rem] text-pretty text-[1.1rem] leading-relaxed text-on-block/80">
+              <p className="mt-4 max-w-[32rem] text-pretty text-[1.1rem] leading-relaxed text-muted">
                 {description}
               </p>
             </m.div>
@@ -634,28 +523,23 @@ export default function ContactWithGlobe({
                 className="scroll-mt-8 lg:col-start-2 lg:row-start-1"
               >
                 {/* Double bezel: a light outer shell, then the inner core with concentric corners. */}
-                <div className="rounded-[24px] bg-on-block/[0.04] p-2 ring-1 ring-on-block/10 shadow-[0_40px_90px_-40px_rgb(18_10_6/0.6)]">
-                  <div className="rounded-[16px] bg-block-2/55 p-5 ring-1 ring-on-block/[0.07] shadow-[inset_0_1px_0_rgb(242_232_217/0.06)] sm:p-8">
+                <div className="rounded-[24px] bg-card-shell p-2 shadow-card ring-1 ring-card-line">
+                  <div className="rounded-[16px] bg-card p-5 sm:p-8">
                     <EnquiryForm />
                   </div>
                 </div>
               </m.div>
 
-              <m.div
-                {...rise(0.22)}
-                className="grid content-start gap-10 md:grid-cols-2 md:items-center lg:col-start-1 lg:row-start-1 lg:grid-cols-1 lg:items-start"
-              >
-                <div>
-                  <h3 className="font-serif text-[1.6rem] font-medium leading-tight">Visit, call or message</h3>
-                  <ul className="mt-5 grid gap-2">
-                    {CHANNELS.map((c) => (
-                      <li key={c.label}>
-                        <ChannelRow channel={c} />
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <GlobeToIndia className="mx-auto w-full max-w-[20rem] md:max-w-[24rem] lg:mx-0 lg:max-w-[26rem]" />
+              {/* Its heading's first line sits level with the top edge of the form card (leading-none). */}
+              <m.div {...rise(0.22)} className="lg:col-start-1 lg:row-start-1">
+                <h3 className="font-serif text-[1.6rem] font-medium leading-none">Visit, call or message</h3>
+                <ul className="mt-6 grid gap-2 md:grid-cols-2 md:gap-x-8 lg:grid-cols-1">
+                  {CHANNELS.map((c) => (
+                    <li key={c.label}>
+                      <ChannelRow channel={c} />
+                    </li>
+                  ))}
+                </ul>
               </m.div>
             </div>
           </div>

@@ -4,15 +4,21 @@ import { CONTACT, NAV_LINKS } from "@/lib/site";
 import { container } from "./sections";
 
 /*
-  Dark, the same espresso brown as the Contact section and the closing sections of the
-  Programs pages above it, so every page ends in one continuous dark chapter.
+  The page's dark closing anchor (chapter-4 to chapter-5 in globals.css). Its rounded top
+  edge rises 2rem over the section above (the light Contact section on the home page, the
+  dark closing section on Programs pages), the one deliberate light-to-dark switch.
 */
+const LINK =
+  "inline-block underline-offset-4 transition-[transform,translate,scale] duration-200 ease-out-soft hover:underline active:scale-[0.98] motion-reduce:transition-none";
 export function SiteFooter() {
   return (
-    <footer className="relative z-10 border-t border-on-block/12 bg-block text-on-block [color-scheme:dark]">
+    <footer className="chapter-4 relative z-10 -mt-8 rounded-t-[2rem] text-on-block [color-scheme:dark] sm:rounded-t-[2.75rem] lg:rounded-t-[3.5rem]">
       <div className={`${container} grid gap-12 py-16 md:grid-cols-12 lg:py-20`}>
         <div className="md:col-span-5">
-          <Link href="/" className="font-serif text-3xl font-semibold tracking-tight">
+          <Link
+            href="/"
+            className="inline-block font-serif text-3xl font-semibold tracking-tight transition-[opacity,transform,translate,scale] duration-200 ease-out-soft hover:opacity-85 active:scale-[0.98] motion-reduce:transition-none"
+          >
             Veda
           </Link>
           <p className="mt-4 max-w-[22rem] text-pretty leading-relaxed text-on-block/75">
@@ -40,7 +46,7 @@ export function SiteFooter() {
           <ul className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2.5">
             {COURSES.map((c) => (
               <li key={c.slug}>
-                <Link href={`/programs/${c.slug}`} className="underline-offset-4 hover:underline">
+                <Link href={`/programs/${c.slug}`} className={LINK}>
                   {c.title}
                 </Link>
               </li>
@@ -52,13 +58,13 @@ export function SiteFooter() {
           <p className="text-[0.95rem] font-medium text-on-block/75">Veda</p>
           <ul className="mt-4 grid gap-2.5">
             <li>
-              <Link href="/" className="underline-offset-4 hover:underline">
+              <Link href="/" className={LINK}>
                 Home
               </Link>
             </li>
             {NAV_LINKS.map((l) => (
               <li key={l.href}>
-                <Link href={l.href} className="underline-offset-4 hover:underline">
+                <Link href={l.href} className={LINK}>
                   {l.label}
                 </Link>
               </li>
@@ -66,8 +72,11 @@ export function SiteFooter() {
           </ul>
         </nav>
       </div>
-      <div className={`${container} border-t border-on-block/12 py-6 text-sm text-on-block/75`}>
-        © {new Date().getFullYear()} Veda. [Registered name and address]
+      {/* The divider sits inside the container, so it lines up with the columns above. */}
+      <div className={container}>
+        <div className="border-t border-hairline py-6 text-sm text-on-block/75">
+          © {new Date().getFullYear()} Veda. [Registered name and address]
+        </div>
       </div>
     </footer>
   );

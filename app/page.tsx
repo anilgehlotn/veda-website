@@ -4,10 +4,9 @@ import { ScrollMotion } from "@/components/scroll-motion";
 import { Hero } from "@/components/hero";
 import { HomePrograms } from "@/components/home-programs";
 import { WhyVeda } from "@/components/why-veda";
-import { Results } from "@/components/results";
+import { ResultsCarousel } from "@/components/results-carousel";
 import { Faq } from "@/components/faq";
-import ContactWithGlobe from "@/components/ui/contact-with-globe";
-import { HAS_RESULTS } from "@/data/results";
+import ContactSection from "@/components/ui/contact-section";
 import { faqJsonLd } from "@/data/faq";
 
 export default function Home() {
@@ -32,11 +31,11 @@ export default function Home() {
           <HomePrograms />
           <WhyVeda />
         </ScrollMotion>
-        {/* One dark closing chapter: Results (when there are results), FAQ, Contact,
-            footer. Whichever comes first carries the single light-to-dark edge. */}
-        <Results />
-        <Faq opensDarkChapter={!HAS_RESULTS} />
-        <ContactWithGlobe opensDarkChapter={false} />
+        {/* Light, like the sections above: Results (when there are results), FAQ and
+            Contact, each a shade apart. The dark footer closes the page. */}
+        <ResultsCarousel />
+        <Faq />
+        <ContactSection />
       </main>
       <SiteFooter />
     </div>

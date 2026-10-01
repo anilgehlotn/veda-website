@@ -1,5 +1,5 @@
 import { ArrowRight, ArrowsClockwise, FileText, WhatsappLogo } from "@phosphor-icons/react/dist/ssr";
-import { DEMO_CTA } from "@/lib/site";
+import { CONTACT, DEMO_CTA } from "@/lib/site";
 
 /*
   Sections shared by /programs and the course pages. Server components; the
@@ -91,7 +91,7 @@ export function ClosingCta({ context }: { context?: string }) {
       id="book-demo"
       aria-labelledby="closing-title"
       data-closing=""
-      className="relative isolate scroll-mt-6 overflow-hidden bg-block text-on-block"
+      className="chapter-3 relative isolate scroll-mt-6 overflow-hidden text-on-block"
     >
       <p
         lang="sa"
@@ -128,15 +128,28 @@ export function ClosingCta({ context }: { context?: string }) {
             />
           </a>
         </div>
-        <dl data-part className="mt-12 grid max-w-xl gap-x-10 gap-y-4 text-[0.95rem] sm:grid-cols-3">
+        <dl data-part className="mt-12 grid max-w-2xl gap-x-10 gap-y-4 text-[0.95rem] sm:grid-cols-3">
           {[
-            ["Call", "[Phone number]"],
-            ["WhatsApp", "[WhatsApp number]"],
-            ["Visit", "[Address]"],
-          ].map(([k, v]) => (
+            { k: "Call", v: CONTACT.phone, href: CONTACT.phoneHref },
+            { k: "WhatsApp", v: CONTACT.whatsapp, href: CONTACT.whatsappHref, external: true },
+            { k: "Visit", v: CONTACT.address },
+          ].map(({ k, v, href, external }) => (
             <div key={k}>
-              <dt className="text-on-block/65">{k}</dt>
-              <dd className="mt-0.5 font-medium">{v}</dd>
+              <dt className="text-on-block/75">{k}</dt>
+              <dd className="mt-0.5 font-medium">
+                {href ? (
+                  <a
+                    href={href}
+                    {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                    className="inline-block whitespace-nowrap underline decoration-on-block/40 underline-offset-4 transition-[text-decoration-color,transform,translate,scale] duration-200 ease-out-soft hover:decoration-accent active:scale-[0.98]"
+                  >
+                    {v}
+                    {external && <span className="sr-only"> (opens WhatsApp)</span>}
+                  </a>
+                ) : (
+                  v
+                )}
+              </dd>
             </div>
           ))}
         </dl>

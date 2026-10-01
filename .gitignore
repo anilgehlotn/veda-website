@@ -37,3 +37,6 @@ CLAUDE.md
 
 
 DESIGN.md
+
+# The example env file has names only, no secrets: keep it in git.
+!.env.example

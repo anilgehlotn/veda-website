@@ -23,6 +23,41 @@
   --tan: #e6d5bb;
   --sand: #d5b88e;
   --mid: #6e4a33;
+
+  /*
+    The dark closing chapter (Results, FAQ, Contact, footer; and the closing section of
+    the Programs pages). A warm cocoa that deepens gently from the first section to the
+    bottom of the footer. Each section fades from its own shade to the next one's, so
+    there are no seams. Same in both colour schemes.
+  */
+  --chapter-1: #4a3528;
+  --chapter-2: #443024;
+  --chapter-3: #3d2b20;
+  --chapter-4: #35251b;
+  --chapter-5: #2e2017;
+  /* Surfaces on the chapter: translucent cream, so each is one step lighter on any shade. */
+  --shell: rgb(242 232 217 / 0.05); /* outer frame of a card */
+  --surface: rgb(242 232 217 / 0.07); /* card core, FAQ items, tab bars, icon boxes */
+  --field: rgb(242 232 217 / 0.09); /* form fields and the active tab, on a surface */
+  --hairline: rgb(242 232 217 / 0.14); /* rings and dividers */
+  --control-line: rgb(242 232 217 / 0.5); /* field borders (3:1 against their background) */
+  --shadow-chapter: 0 32px 72px -36px rgb(28 17 11 / 0.55), 0 2px 6px -2px rgb(28 17 11 / 0.25);
+
+  /*
+    Light sections after "Why trust Veda" (Results, FAQ, Contact). One paper family with a
+    gentle tint shift from section to section; the grid paper stays Why Veda's signature.
+  */
+  --sheet-1: #f7f0e5; /* Results: a shade lighter than the paper */
+  --sheet-2: var(--paper); /* FAQ: the site paper */
+  --sheet-3: #efe3d0; /* Contact: a shade warmer */
+  --card: #fffdf8; /* lightest cream: cards, FAQ items, the form (same as the Why Veda frames) */
+  --card-shell: rgb(43 27 18 / 0.035); /* outer frame of a double-bezel card */
+  --card-line: rgb(43 27 18 / 0.12); /* hairlines on light */
+  --field-bg: #fbf6ee; /* form fields */
+  --field-line: #8c7563; /* field and outlined-tab borders: 3:1 or more on cream */
+  /* The marigold accent darkened for small text and numbers on light (4.5:1 or more). */
+  --accent-ink: #8a5214;
+  --shadow-card: 0 30px 70px -38px rgb(74 47 31 / 0.35), 0 2px 6px -2px rgb(74 47 31 / 0.08);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -42,6 +77,15 @@
     --tan: #2b1e15;
     --sand: #3b291c;
     --mid: #5c3c28;
+    --sheet-1: #21160f;
+    --sheet-3: #24180f;
+    --card: #2a1d15;
+    --card-shell: rgb(240 228 210 / 0.04);
+    --card-line: rgb(240 228 210 / 0.14);
+    --field-bg: #1f150f;
+    --field-line: #9c8672;
+    --accent-ink: #e8a23a;
+    --shadow-card: 0 30px 70px -38px rgb(0 0 0 / 0.6), 0 2px 6px -2px rgb(0 0 0 / 0.3);
   }
 }
 
@@ -61,6 +105,27 @@
   --color-tan: var(--tan);
   --color-sand: var(--sand);
   --color-mid: var(--mid);
+  --color-chapter-1: var(--chapter-1);
+  --color-chapter-2: var(--chapter-2);
+  --color-chapter-3: var(--chapter-3);
+  --color-chapter-4: var(--chapter-4);
+  --color-chapter-5: var(--chapter-5);
+  --color-shell: var(--shell);
+  --color-surface: var(--surface);
+  --color-field: var(--field);
+  --color-hairline: var(--hairline);
+  --color-control-line: var(--control-line);
+  --shadow-chapter: var(--shadow-chapter);
+  --color-sheet-1: var(--sheet-1);
+  --color-sheet-2: var(--sheet-2);
+  --color-sheet-3: var(--sheet-3);
+  --color-card: var(--card);
+  --color-card-shell: var(--card-shell);
+  --color-card-line: var(--card-line);
+  --color-field-bg: var(--field-bg);
+  --color-field-line: var(--field-line);
+  --color-accent-ink: var(--accent-ink);
+  --shadow-card: var(--shadow-card);
   --color-tone-bg: var(--tone-bg);
   --color-tone-fg: var(--tone-fg);
   --color-tone-muted: var(--tone-muted);
@@ -197,8 +262,27 @@ body::after {
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus);
   outline-offset: 3px;
+}
+
+/*
+  Focus ring colour: the darker amber on light backgrounds (bright marigold is only about
+  2.3:1 on cream, under the 3:1 a focus ring needs), the bright marigold inside anything
+  dark brown.
+*/
+:root {
+  --focus: var(--accent-ink);
+}
+.bg-block,
+.tone-dark,
+.tone-mid,
+.chapter-1,
+.chapter-2,
+.chapter-3,
+.chapter-4,
+[data-on-dark] {
+  --focus: var(--accent);
 }
 
 /* Hero entrance. CSS-only, so server and client render identically. */
@@ -245,3 +329,18 @@ body::after {
     scroll-behavior: auto;
   }
 }
+
+/*
+  Dark backgrounds: the footer (chapter-4) and the closing section of the Programs pages
+  (chapter-3). Each fades from its own shade to the next one's top shade, so the brown
+  deepens gently with no visible seam.
+
+  Radius system for the whole page: 24px double-bezel card shells with 16px cores (Why
+  Veda frames, result cards, FAQ strip, the form) and 16px single cards (FAQ questions);
+  12px photos; 6px for everything you press or type in (buttons, tabs, fields, icon
+  boxes, the Programs tiles).
+*/
+.chapter-1 { background: linear-gradient(180deg, var(--chapter-1), var(--chapter-2)); }
+.chapter-2 { background: linear-gradient(180deg, var(--chapter-2), var(--chapter-3)); }
+.chapter-3 { background: linear-gradient(180deg, var(--chapter-3), var(--chapter-4)); }
+.chapter-4 { background: linear-gradient(180deg, var(--chapter-4), var(--chapter-5)); }

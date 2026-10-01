@@ -79,7 +79,7 @@ export function SiteHeader({
         <div className="flex h-18 items-center justify-between px-4 sm:px-8 lg:grid lg:h-20 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:px-0">
           <Link
             href="/"
-            className="font-serif text-[1.7rem] font-semibold leading-none tracking-tight text-ink lg:px-12 lg:text-on-block xl:px-16"
+            className="font-serif text-[1.7rem] font-semibold leading-none tracking-tight text-ink lg:px-12 lg:text-on-block lg:[--focus:var(--accent)] xl:px-16"
           >
             Veda
           </Link>

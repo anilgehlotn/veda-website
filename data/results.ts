@@ -1,119 +1,200 @@
 /*
   Veda results. The Results section on the home page is drawn entirely from this file.
 
-  To add a real result, copy one entry in RESULTS and change its values (see the
-  field notes below). To launch before any results exist, make RESULTS an empty
-  array: the section and its "Results" nav link disappear.
+  The numbers, names, colleges and courses below are exactly as supplied by Veda. Do not
+  round or reformat them: `value` is shown as written.
 
-  Everything below is PLACEHOLDER content in [square brackets]. Replace it with real,
-  checked results only, and set consentToShow to true only when the student (and a
-  parent, for minors) has agreed in writing to be named and pictured.
+  Photos live in public/results/ (see the README there). Replacing a file with the same
+  name updates the site; no code change is needed.
+
+  To add a result, copy one entry and change every field. Only entries with
+  consentToShow set to true are shown. If no entries are shown, the section and its
+  "Results" nav link disappear.
 */
 
-export type Exam = "10th Board" | "12th Board" | "NEET" | "JEE" | "KCET";
-
-export const EXAMS: Exam[] = ["10th Board", "12th Board", "NEET", "JEE", "KCET"];
+export type Exam = "NEET" | "JEE Advanced" | "JEE Main" | "KCET" | "PESSAT";
+export type ResultType = "score" | "air" | "percentile" | "rank";
+export type Stream = "engineering" | "medical";
 
 export type Result = {
-  /** Unique and stable, e.g. "2026-neet-aarav". Used as the React key. */
-  id: string;
-  studentName: string;
-  /** Path under /public, e.g. "/results/aarav.jpg" (square, at least 480 x 480). */
-  photo?: string;
-  /** Only when true are the name and photo shown. Otherwise: "A Veda student". */
-  consentToShow: boolean;
+  name: string;
+  /** Lower-case, hyphenated; also the photo's file name. */
+  slug: string;
   exam: Exam;
-  /** The year of the exam, e.g. "2026". */
+  resultType: ResultType;
+  /** Shown exactly as written, e.g. "642", "677", "99.5", "2468". */
+  value: string;
+  /** Only for scores, e.g. 720 for NEET. */
+  outOf?: number;
+  college: string;
+  course: string;
+  /** Path under /public, e.g. "/results/eshanya.jpg". */
+  photo: string;
+  /** Only shown when true (written consent from the student and a parent). */
+  consentToShow: boolean;
   year: string;
-  /** Shown large, exactly as written: "96.4%", "AIR 1,284", "Rank 312". */
-  score: string;
-  /** Optional: "Science, PCMB", "Maths 100". */
-  subjects?: string;
-  /** Optional, at most about 30 words (three lines). */
-  quote?: string;
-  quoteBy?: "student" | "parent";
-  /** The one result shown large at the top. If none is marked, the first entry is. */
+  /** Shown as a large card at the top of its tab. */
   featured?: boolean;
 };
 
-export type Highlight = {
-  /** Shown large in the accent colour, exactly as written: "[Number]", "[Rank]". */
-  figure: string;
-  /** One short line under the figure. */
-  label: string;
-};
+const YEAR = "[Year]";
 
-export const RESULTS: Result[] = [
+const ALL_RESULTS: Result[] = [
+  // Medical
   {
-    id: "placeholder-neet-1",
-    studentName: "[Student name]",
-    consentToShow: true,
+    name: "Eshanya",
+    slug: "eshanya",
     exam: "NEET",
-    year: "[Year]",
-    score: "[Rank]",
-    subjects: "[Subjects]",
-    quote: "[A short quote from the student about preparing at Veda, at most three lines.]",
-    quoteBy: "student",
+    resultType: "score",
+    value: "642",
+    outOf: 720,
+    college: "MS Ramaiah",
+    course: "MBBS",
+    photo: "/results/eshanya.jpg",
+    consentToShow: true,
+    year: YEAR,
     featured: true,
   },
   {
-    id: "placeholder-10th-1",
-    studentName: "[Student name]",
+    name: "Manjunath",
+    slug: "manjunath",
+    exam: "NEET",
+    resultType: "score",
+    value: "630",
+    outOf: 720,
+    college: "Chamarajanagar Institute of Medical Science",
+    course: "MBBS",
+    photo: "/results/manjunath.jpg",
     consentToShow: true,
-    exam: "10th Board",
-    year: "[Year]",
-    score: "[Percentage]",
-    subjects: "[Subjects]",
-    quote: "[A short quote from a parent.]",
-    quoteBy: "parent",
+    year: YEAR,
   },
   {
-    id: "placeholder-12th-1",
-    studentName: "[Student name]",
+    name: "Akhil Sai",
+    slug: "akhil-sai",
+    exam: "NEET",
+    resultType: "score",
+    value: "602",
+    outOf: 720,
+    college: "Haveri Institute of Medical Science",
+    course: "MBBS",
+    photo: "/results/akhil-sai.jpg",
     consentToShow: true,
-    exam: "12th Board",
-    year: "[Year]",
-    score: "[Percentage]",
-    subjects: "[Stream]",
+    year: YEAR,
+  },
+  // Engineering
+  {
+    name: "Olive",
+    slug: "olive",
+    exam: "JEE Advanced",
+    resultType: "air",
+    value: "677",
+    college: "IIT Madras",
+    course: "Engineering Physics",
+    photo: "/results/olive.jpg",
+    consentToShow: true,
+    year: YEAR,
+    featured: true,
   },
   {
-    id: "placeholder-jee-1",
-    studentName: "[Student name]",
+    name: "Adithya V.S",
+    slug: "adithya-vs",
+    exam: "JEE Advanced",
+    resultType: "air",
+    value: "742",
+    college: "IIT Kanpur",
+    course: "Computer Science",
+    photo: "/results/adithya-vs.jpg",
     consentToShow: true,
-    exam: "JEE",
-    year: "[Year]",
-    score: "[Rank]",
-    quote: "[A short quote from the student.]",
-    quoteBy: "student",
+    year: YEAR,
+    featured: true,
   },
   {
-    id: "placeholder-10th-2",
-    studentName: "[Student name]",
-    consentToShow: false,
-    exam: "10th Board",
-    year: "[Year]",
-    score: "[Percentage]",
+    name: "Aanchal",
+    slug: "aanchal",
+    exam: "JEE Main",
+    resultType: "percentile",
+    value: "99.5",
+    college: "NIT Jamshedpur",
+    course: "Electronics",
+    photo: "/results/aanchal.jpg",
+    consentToShow: true,
+    year: YEAR,
   },
   {
-    id: "placeholder-12th-2",
-    studentName: "[Student name]",
+    name: "Siya",
+    slug: "siya",
+    exam: "KCET",
+    resultType: "rank",
+    value: "338",
+    college: "RVCE",
+    course: "Computer Science",
+    photo: "/results/siya.jpg",
     consentToShow: true,
-    exam: "12th Board",
-    year: "[Year]",
-    score: "[Percentage]",
-    subjects: "[Stream]",
+    year: YEAR,
+  },
+  {
+    name: "Rishit",
+    slug: "rishit",
+    exam: "PESSAT",
+    resultType: "air",
+    value: "140",
+    college: "PES University",
+    course: "Computer Science",
+    photo: "/results/rishit.jpg",
+    consentToShow: true,
+    year: YEAR,
+  },
+  {
+    name: "Vishal",
+    slug: "vishal",
+    exam: "KCET",
+    resultType: "rank",
+    value: "2468",
+    college: "BMS College of Engineering",
+    course: "Computer Science",
+    photo: "/results/vishal.jpg",
+    consentToShow: true,
+    year: YEAR,
   },
 ];
 
-export const HIGHLIGHTS: Highlight[] = [
-  { figure: "[Number]", label: "students scored above 90% in 10th Board, [Year]" },
-  { figure: "[Number]", label: "students qualified NEET, [Year]" },
-  { figure: "[Rank]", label: "best JEE rank from Veda, [Year]" },
+/** Only results the student agreed to show. */
+export const RESULTS: Result[] = ALL_RESULTS.filter((r) => r.consentToShow);
+
+export const streamOf = (r: Result): Stream => (r.exam === "NEET" ? "medical" : "engineering");
+
+/** Three true facts from the data above, shown large at the top of the section. */
+export const HIGHLIGHTS: { title: string; detail: string }[] = [
+  { title: "IIT Madras and IIT Kanpur", detail: "JEE Advanced, AIR 677 and AIR 742" },
+  { title: "3 students in MBBS", detail: "NEET scores of 642, 630 and 602 out of 720" },
+  { title: "99.5 percentile in JEE Main", detail: "Aanchal, NIT Jamshedpur" },
 ];
 
-/** The years in the data, newest first (numeric years sort numerically). */
-export function resultYears(results: Result[] = RESULTS): string[] {
-  return [...new Set(results.map((r) => r.year))].sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
-}
+export const RESULTS_YEAR = YEAR;
+
+/**
+ * The order of the cards in the Results carousel (by slug). Results not listed here
+ * appear after these, in the order of the list above.
+ */
+export const DISPLAY_ORDER = [
+  "olive",
+  "adithya-vs",
+  "eshanya",
+  "aanchal",
+  "manjunath",
+  "siya",
+  "rishit",
+  "akhil-sai",
+  "vishal",
+];
+
+/** RESULTS in display order. */
+export const RESULTS_IN_ORDER: Result[] = [...RESULTS].sort((a, b) => {
+  const rank = (r: Result) => {
+    const i = DISPLAY_ORDER.indexOf(r.slug);
+    return i === -1 ? DISPLAY_ORDER.length + RESULTS.indexOf(r) : i;
+  };
+  return rank(a) - rank(b);
+});
 
 export const HAS_RESULTS = RESULTS.length > 0;

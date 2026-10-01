@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { EB_Garamond, Geist, Rozha_One, Tiro_Devanagari_Hindi } from "next/font/google";
 import { PageTransitionProvider } from "@/components/page-transition";
+import { WhatsAppFloat } from "@/components/whatsapp-float";
 import "./globals.css";
 
 // Headline serif: bookish and academic, chosen for "knowledge".
@@ -53,6 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" data-scroll-behavior="smooth" className={`${heading.variable} ${body.variable} ${devanagari.variable} ${devaNumerals.variable}`}>
       <body className="font-sans">
         <PageTransitionProvider>{children}</PageTransitionProvider>
+        <WhatsAppFloat />
       </body>
     </html>
   );
