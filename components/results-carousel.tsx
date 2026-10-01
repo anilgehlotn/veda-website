@@ -46,7 +46,7 @@ const FILTERS: { id: Filter; label: string }[] = [
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 const MIN_SLIDES = 12; // enough cards for a seamless loop on the widest container
-const SPEED_DESKTOP = 0.7; // px per frame
+const SPEED_DESKTOP = 0.7; // px per frame (Embla's default is 2)
 const SPEED_MOBILE = 0.45;
 const RESUME_AFTER_TOUCH = 3000; // ms
 const LIFT = { type: "spring", bounce: 0, visualDuration: 0.4 } as const; // damping ratio 1.0
@@ -172,7 +172,7 @@ function ResultsCarouselSection() {
   const [filter, setFilter] = useState<Filter>("all");
   const [userPaused, setUserPaused] = useState(false);
   const [moving, setMoving] = useState(false); // changes only on start/stop, never per frame
-  const [rowScope, animateRow] = useAnimate<HTMLDivElement>();
+  const [, animateRow] = useAnimate();
 
   const filters = FILTERS.filter((f) => f.id === "all" || RESULTS_IN_ORDER.some((r) => streamOf(r) === f.id));
   const { slides, count } = useMemo(() => {
@@ -193,6 +193,7 @@ function ResultsCarouselSection() {
         stopOnInteraction: true, // stops on drag; sync() decides when to resume
         stopOnMouseEnter: false,
         stopOnFocusIn: false,
+        breakpoints: { "(max-width: 767px)": { speed: SPEED_MOBILE } },
       }),
     ],
     [],
@@ -222,35 +223,17 @@ function ResultsCarouselSection() {
     [sync],
   );
 
-  // Speed: slower on small screens.
-  useEffect(() => {
-    if (!embla) return;
-    const auto = embla.plugins().autoScroll;
-    const mq = window.matchMedia("(min-width: 768px)");
-    const apply = () => {
-      const opts = (auto as unknown as { options: { speed: number } }).options;
-      if (opts) opts.speed = mq.matches ? SPEED_DESKTOP : SPEED_MOBILE;
-      // Restart so the new speed takes effect if it is running.
-      if (auto.isPlaying()) {
-        auto.stop();
-        sync();
-      }
-    };
-    apply();
-    mq.addEventListener("change", apply);
-    return () => mq.removeEventListener("change", apply);
-  }, [embla, sync]);
-
   // Moving / still: for aria-live and the pause button icon.
   useEffect(() => {
     if (!embla) return;
     const onPlay = () => setMoving(true);
     const onStop = () => setMoving(false);
-    embla.on("autoScroll:play", onPlay).on("autoScroll:stop", onStop);
+    // Embla re-initialises on breakpoint changes (mobile speed); re-decide afterwards.
+    embla.on("autoScroll:play", onPlay).on("autoScroll:stop", onStop).on("reInit", sync);
     return () => {
-      embla.off("autoScroll:play", onPlay).off("autoScroll:stop", onStop);
+      embla.off("autoScroll:play", onPlay).off("autoScroll:stop", onStop).off("reInit", sync);
     };
-  }, [embla]);
+  }, [embla, sync]);
 
   // Touch and drag: stop now (the plugin does), resume about 3 seconds after letting go.
   useEffect(() => {
@@ -306,11 +289,14 @@ function ResultsCarouselSection() {
       embla.plugins().autoScroll?.stop();
       if (dir === 1) embla.scrollNext(Boolean(reduce));
       else embla.scrollPrev(Boolean(reduce));
+      // Resume once the row is within 1px of the card (Embla's "settle" waits out a long sub-pixel tail).
+      const engine = embla.internalEngine();
       const resume = () => {
-        embla.off("settle", resume);
+        if (Math.abs(engine.target.get() - engine.location.get()) > 1) return;
+        embla.off("scroll", resume).off("settle", resume);
         sync();
       };
-      embla.on("settle", resume);
+      embla.on("scroll", resume).on("settle", resume);
     },
     [embla, reduce, sync],
   );
@@ -326,7 +312,7 @@ function ResultsCarouselSection() {
   const pickFilter = (f: Filter) => {
     if (f === filter) return;
     setFilter(f);
-    if (rowScope.current && !reduce) void animateRow(rowScope.current, { opacity: [0.2, 1] }, { duration: 0.4, ease: EASE });
+    if (regionRef.current && !reduce) void animateRow(regionRef.current, { opacity: [0.2, 1] }, { duration: 0.4, ease: EASE });
   };
 
   const onTabKey = (e: React.KeyboardEvent, i: number) => {
@@ -359,7 +345,7 @@ function ResultsCarouselSection() {
       onPrev={prev}
       onNext={next}
       onToggle={togglePause}
-      paused={userPaused || !moving}
+      paused={userPaused}
       showToggle={showToggle}
       controls={rowId}
     />
@@ -425,25 +411,25 @@ function ResultsCarouselSection() {
             {/* The row: inside the content container, cards clipped cleanly at its edges. */}
             <m.div variants={rise} className="mt-6 lg:mt-8">
               <div
-                ref={(el) => {
-                  regionRef.current = el;
-                  rowScope.current = el as HTMLDivElement;
-                }}
+                ref={regionRef}
                 id={rowId}
                 role="region"
                 aria-roledescription="carousel"
                 aria-label="Student results"
                 tabIndex={0}
                 onKeyDown={onRowKey}
-                onMouseEnter={() => set({ hover: true })}
-                onMouseLeave={() => set({ hover: false })}
-                onFocus={() => set({ focus: true })}
+                // Mouse only: a tap on a phone fires mouseenter but never mouseleave.
+                onPointerEnter={(e) => e.pointerType === "mouse" && set({ hover: true })}
+                onPointerLeave={(e) => e.pointerType === "mouse" && set({ hover: false })}
+                // Keyboard focus only: a mouse click on the row should not keep it stopped.
+                onFocus={(e) => e.target.matches(":focus-visible") && set({ focus: true })}
                 onBlur={(e) => {
                   if (!e.currentTarget.contains(e.relatedTarget as Node | null)) set({ focus: false });
                 }}
                 className="outline-offset-2"
               >
-                <div ref={viewportRef} className="overflow-hidden py-3">
+                {/* 64px below for the soft card shadow (it reaches about 62px), pulled back so spacing is unchanged. */}
+                <div ref={viewportRef} className="-mb-13 overflow-hidden pb-16 pt-3">
                   <ul aria-live={moving ? "off" : "polite"} className="flex touch-pan-y">
                     {slides.map(({ r, n, copy }, i) => (
                       <li
@@ -454,7 +440,7 @@ function ResultsCarouselSection() {
                         aria-hidden={copy || undefined}
                         inert={copy || undefined}
                         data-copy={copy || undefined}
-                        className="min-w-0 shrink-0 grow-0 basis-[calc(min(68vw,18rem)+24px)] pr-6"
+                        className="min-w-0 shrink-0 grow-0 basis-[calc(min(68vw,18rem)+24px)] pr-6 md:basis-[calc(16rem+24px)] lg:basis-[calc(18rem+24px)]"
                       >
                         <ResultCard result={r} eager={i < 5} />
                       </li>
